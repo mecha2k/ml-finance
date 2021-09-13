@@ -43,11 +43,11 @@ if __name__ == "__main__":
     #     "005930", start.strftime("%Y-%m-%d"), from_file=False, filename="data/삼성전자.pkl"
     # )
 
-    assets = ["현대차", "삼성전자", "네이버", "카카오"]
-    data = []
-    for asset in assets:
-        filename = f"data/{asset}.pkl"
-        data.append(pd.read_pickle(filename))
-    for i in range(len(assets)):
-        data[i].info()
-        print(data[i].describe())
+    # assets = ["현대차", "삼성전자", "네이버", "카카오"]
+    # data = []
+    # for asset in assets:
+    #     filename = f"data/{asset}.pkl"
+    #     data.append(pd.read_pickle(filename))
+    # for i in range(len(assets)):
+    #     data[i].info()
+    #     print(data[i].describe())
