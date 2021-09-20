@@ -1,8 +1,11 @@
 import pandas as pd
-import matplotlib.pyplot as plt
 import backtrader as bt
+import matplotlib.pyplot as plt
 
-from icecream import ic
+import locale
+from datetime import datetime
+
+locale.setlocale(locale.LC_ALL, "ko_KR")
 
 plt.style.use("default")
 plt.rcParams["axes.unicode_minus"] = False
@@ -33,7 +36,7 @@ class SmaStrategy(bt.Strategy):
 
     def log(self, txt):
         dt = self.datas[0].datetime.date(0).isoformat()
-        print(f"{dt}, {txt}")
+        print(f"{dt}: {txt}")
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -178,49 +181,49 @@ if __name__ == "__main__":
     data = pd.read_pickle("./data/stock1.pkl")
     df = data.loc["현대차"]
     df.set_index("date", inplace=True)
-    df = df.sort_index()["2018-1-1":"2018-12-31"]
+    df = df.sort_index()["2018-1-1":"2018-3-31"]
     df.info()
 
     data = bt.feeds.PandasData(dataname=df)
 
-    # cerebro = bt.Cerebro(stdstats=False)
-    # cerebro.adddata(data)
-    # cerebro.broker.setcash(1000000.0)
-    # cerebro.addstrategy(SmaStrategy)
-    # cerebro.addobserver(bt.observers.BuySell)
-    # cerebro.addobserver(bt.observers.Value)
-    # cerebro.addobserver(bt.observers.Broker)
-    # cerebro.addobserver(bt.observers.Trades)
-
-    # print(f"Starting Portfolio Value: {cerebro.broker.getvalue():.2f}")
-    # cerebro.run()
-    # print(f"Final Portfolio Value: {cerebro.broker.getvalue():.2f}")
-    # cerebro.plot(iplot=False, volume=True, width=8, height=5)
-
-    cerebro = bt.Cerebro(stdstats=False, cheat_on_open=True)
-    cerebro.addstrategy(RsiSignalStrategy)
+    cerebro = bt.Cerebro(stdstats=False)
     cerebro.adddata(data)
     cerebro.broker.setcash(1000000.0)
-    cerebro.broker.setcommission(commission=0.001)
+    cerebro.addstrategy(SmaStrategy)
     cerebro.addobserver(bt.observers.BuySell)
     cerebro.addobserver(bt.observers.Value)
     cerebro.addobserver(bt.observers.Broker)
     cerebro.addobserver(bt.observers.Trades)
-    cerebro.addanalyzer(bt.analyzers.Returns, _name="returns")
-    cerebro.addanalyzer(bt.analyzers.TimeReturn, _name="time_return")
 
-    print("Starting Portfolio Value: %.2f" % cerebro.broker.getvalue())
-    backtest_result = cerebro.run()
-    print("Final Portfolio Value: %.2f" % cerebro.broker.getvalue())
-    print(backtest_result[0].analyzers.returns.get_analysis())
-    cerebro.plot(iplot=False, volume=False)
+    print(f"Starting Portfolio Value: {cerebro.broker.getvalue():.2f}")
+    cerebro.run()
+    print(f"Final Portfolio Value: {cerebro.broker.getvalue():.2f}")
+    # cerebro.plot(iplot=False, volume=True, width=8, height=5)
 
-    ic(backtest_result[0].analyzers)
-    returns_dict = backtest_result[0].analyzers.time_return.get_analysis()
-    returns_df = pd.DataFrame(
-        list(returns_dict.items()), columns=["report_date", "return"]
-    ).set_index("report_date")
-    returns_df.plot(title="Portfolio returns")
-    plt.tight_layout()
-    plt.savefig("images/ch2_im9.png")
+    # cerebro = bt.Cerebro(stdstats=False, cheat_on_open=True)
+    # cerebro.addstrategy(RsiSignalStrategy)
+    # cerebro.adddata(data)
+    # cerebro.broker.setcash(1000000.0)
+    # cerebro.broker.setcommission(commission=0.001)
+    # cerebro.addobserver(bt.observers.BuySell)
+    # cerebro.addobserver(bt.observers.Value)
+    # cerebro.addobserver(bt.observers.Broker)
+    # cerebro.addobserver(bt.observers.Trades)
+    # cerebro.addanalyzer(bt.analyzers.Returns, _name="returns")
+    # cerebro.addanalyzer(bt.analyzers.TimeReturn, _name="time_return")
+
+    # print("Starting Portfolio Value: %.2f" % cerebro.broker.getvalue())
+    # backtest_result = cerebro.run()
+    # print("Final Portfolio Value: %.2f" % cerebro.broker.getvalue())
+    # print(backtest_result[0].analyzers.returns.get_analysis())
+    # cerebro.plot(iplot=False, volume=False)
+
+    # print(backtest_result[0].analyzers)
+    # returns_dict = backtest_result[0].analyzers.time_return.get_analysis()
+    # returns_df = pd.DataFrame(
+    #     list(returns_dict.items()), columns=["report_date", "return"]
+    # ).set_index("report_date")
+    # returns_df.plot(title="Portfolio returns")
+    # plt.tight_layout()
+    # plt.savefig("images/ch2_im9.png")
 
