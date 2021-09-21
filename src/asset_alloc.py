@@ -1,55 +1,55 @@
 import numpy as np
 import pandas as pd
 import yfinance as yf
-import statsmodels.api as sm
-import statsmodels.formula.api as smf
 import matplotlib.pyplot as plt
 import seaborn as sns
 import quandl
 import warnings
 import os
-import pandas_datareader.data as web
-import pyfolio as pf
 import scipy.optimize as sco
 import cvxpy as cp
 
-from scipy.stats import norm
-from pandas_datareader.famafrench import get_available_datasets
-from datetime import date, datetime
 from dotenv import load_dotenv
 from icecream import ic
 
 plt.style.use("seaborn")
 sns.set_palette("cubehelix")
-plt.rcParams["figure.figsize"] = [8, 5]
+plt.style.use("seaborn")
+plt.rcParams["axes.unicode_minus"] = False
+plt.rcParams["font.family"] = "Malgun Gothic"
+# plt.rcParams["font.size"] = 18
+# plt.rcParams["axes.titlesize"] = 24
+# plt.rcParams["axes.labelsize"] = 18
+# plt.rcParams["xtick.labelsize"] = 14
+# plt.rcParams["ytick.labelsize"] = 14
+# plt.rcParams["legend.fontsize"] = 18
+# plt.rcParams["figure.titlesize"] = 24
 plt.rcParams["figure.dpi"] = 300
-warnings.simplefilter(action="ignore", category=FutureWarning)
+plt.rcParams["figure.figsize"] = [8, 5]
+# warnings.simplefilter(action="ignore", category=FutureWarning)
 
 load_dotenv(verbose=True)
 quandl.ApiConfig.api_key = os.getenv("Quandl")
 
 if __name__ == "__main__":
-    risky_assets = ["FB", "TSLA", "TWTR", "MSFT"]
-    risky_assets.sort()
-    n_assets = len(risky_assets)
-    src_data = "data/yf_assets_c07_2.pkl"
-    try:
-        data = pd.read_pickle(src_data)
-        print("data reading from file...")
-    except FileNotFoundError:
-        data = yf.download(risky_assets, start=start, end=end, adjusted=True, progress=False)
-        data.to_pickle(src_data)
-    prices_df = data["2018-1":"2018-12"]
-    print(f"Downloaded {prices_df.shape[0]} rows of data.")
-    prices_df["Adj Close"].plot(title="Stock prices of the considered assets")
+    df = pd.read_pickle("./data/stock1.pkl")
+    df = df.loc[:, ["date", "close"]].reset_index()
+    df = df.pivot(index="date", columns="ticker", values="close")
+    prices = df["2010-1":"2021-12"]
+    ic(df.head())
+    ic(df.columns.values)
+    
+    # ["현대차", "삼성전자", "네이버", "카카오"]
+    assets = df.columns.values
+    prices.plot(title="Stock prices of the considered assets")
     plt.tight_layout()
-    plt.savefig("images/ch7_im2.png")
+    plt.savefig("images/ch7_im2.png")    # src_data = "data/yf_assets_c07_2.pkl"
 
     ## Finding the Efficient Frontier using Monte Carlo simulations
     N_PORTFOLIOS = 10 ** 5
     N_DAYS = 252
 
-    returns_df = prices_df["Adj Close"].pct_change().dropna()
+    returns_df = prices.pct_change().dropna()
     avg_returns = returns_df.mean(axis=0) * N_DAYS
     cov_mat = returns_df.cov(ddof=1) * N_DAYS
     returns_df.plot(title="Daily returns of the considered assets")
@@ -57,11 +57,10 @@ if __name__ == "__main__":
     plt.savefig("images/ch7_im3.png")
 
     np.random.seed(42)
-    weights = np.random.random(size=(N_PORTFOLIOS, n_assets))
+    weights = np.random.random(size=(N_PORTFOLIOS, len(assets)))
     ic(weights.shape)
     weights_sum = np.sum(weights, axis=1).reshape(-1, 1)
     weights /= weights_sum
-    # weights /= np.sum(weights, axis=1)[:, np.newaxis]
     ic(weights.shape)
 
     # 6. Calculate portfolio metrics:
@@ -110,14 +109,14 @@ if __name__ == "__main__":
     )
     ax.set(xlabel="Volatility", ylabel="Expected Returns", title="Efficient Frontier")
     ax.plot(portf_vol_ef, portf_rtns_ef, "b--")
-    for asset_index in range(n_assets):
+    for asset_index in range(len(assets)):
         ax.scatter(
             x=np.sqrt(cov_mat.iloc[asset_index, asset_index]),
             y=avg_returns[asset_index],
             marker=MARKS[asset_index],
             s=150,
             color="black",
-            label=risky_assets[asset_index],
+            label=assets[asset_index],
         )
     ax.legend()
     plt.tight_layout()
@@ -134,15 +133,15 @@ if __name__ == "__main__":
     for index, value in max_sharpe_portf.items():
         print(f"{index}: {100 * value:.2f}% ", end="", flush=True)
     print("\nWeights")
-    for x, y in zip(risky_assets, weights[np.argmax(portf_results_df.sharpe_ratio)]):
+    for x, y in zip(assets, weights[np.argmax(portf_results_df.sharpe_ratio)]):
         print(f"{x}: {100*y:.2f}% ", end="", flush=True)
 
-    print("Minimum Volatility portfolio ----")
+    print("\nMinimum Volatility portfolio ----")
     print("Performance")
     for index, value in min_vol_portf.items():
         print(f"{index}: {100 * value:.2f}% ", end="", flush=True)
     print("\nWeights")
-    for x, y in zip(risky_assets, weights[np.argmin(portf_results_df.volatility)]):
+    for x, y in zip(assets, weights[np.argmin(portf_results_df.volatility)]):
         print(f"{x}: {100*y:.2f}% ", end="", flush=True)
 
     fig, ax = plt.subplots()
@@ -247,7 +246,7 @@ if __name__ == "__main__":
     for index, value in min_vol_portf.items():
         print(f"{index}: {100 * value:.2f}% ", end="", flush=True)
     print("\nWeights")
-    for x, y in zip(risky_assets, efficient_portfolios[min_vol_ind]["x"]):
+    for x, y in zip(assets, efficient_portfolios[min_vol_ind]["x"]):
         print(f"{x}: {100*y:.2f}% ", end="", flush=True)
 
     def neg_sharpe_ratio(w, avg_rtns, cov_mat, rf_rate):
@@ -285,7 +284,7 @@ if __name__ == "__main__":
     for index, value in max_sharpe_portf.items():
         print(f"{index}: {100 * value:.2f}% ", end="", flush=True)
     print("\nWeights")
-    for x, y in zip(risky_assets, max_sharpe_portf_w):
+    for x, y in zip(assets, max_sharpe_portf_w):
         print(f"{x}: {100*y:.2f}% ", end="", flush=True)
 
     ## Finding the Efficient Frontier using convex optimization with cvxpy
@@ -318,7 +317,7 @@ if __name__ == "__main__":
         portf_rtn_cvx_ef[i] = portf_rtn_cvx.value
         weights_ef.append(weights.value)
 
-    weights_df = pd.DataFrame(weights_ef, columns=risky_assets, index=np.round(gamma_range, 3))
+    weights_df = pd.DataFrame(weights_ef, columns=assets, index=np.round(gamma_range, 3))
     ax = weights_df.plot(kind="bar", stacked=True)
     ax.set(title="Weights allocation per risk-aversion level", xlabel=r"$\gamma$", ylabel="weight")
     ax.legend(bbox_to_anchor=(1, 1))
@@ -328,12 +327,12 @@ if __name__ == "__main__":
     # 6. Plot the Efficient Frontier, together with the individual assets:
     fig, ax = plt.subplots()
     ax.plot(portf_vol_cvx_ef, portf_rtn_cvx_ef, "g-")
-    for asset_index in range(n_assets):
+    for asset_index in range(len(assets)):
         plt.scatter(
             x=np.sqrt(cov_mat[asset_index, asset_index]),
             y=avg_returns[asset_index],
             marker=MARKS[asset_index],
-            label=risky_assets[asset_index],
+            label=assets[asset_index],
             s=150,
         )
     ax.set(
@@ -408,7 +407,7 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(len_leverage, 1, sharex=True)
     for ax_index in range(len_leverage):
         weights_df = pd.DataFrame(
-            weights_ef[ax_index], columns=risky_assets, index=np.round(gamma_range, 3)
+            weights_ef[ax_index], columns=assets, index=np.round(gamma_range, 3)
         )
         weights_df.plot(kind="bar", stacked=True, ax=ax[ax_index], legend=None)
         ax[ax_index].set(ylabel=f"max_leverage = {LEVERAGE_RANGE[ax_index]}" "\n weight")
