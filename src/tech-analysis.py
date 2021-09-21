@@ -1,7 +1,7 @@
 import pandas as pd
 import backtrader as bt
+import quantstats
 import matplotlib.pyplot as plt
-
 import locale
 from datetime import datetime
 
@@ -82,6 +82,46 @@ class SmaStrategy(bt.Strategy):
             if self.data_close[0] < self.sma[0]:
                 self.log(f"SELL CREATED --- Price: {self.data_close[0]:.2f}")
                 self.order = self.sell()
+
+
+class SmaStrategy1(bt.Strategy):
+    params = (("ma_period", 20),)
+
+    def __init__(self):
+        # keep track of close price in the series
+        self.data_close = self.datas[0].close
+        # keep track of pending orders
+        self.order = None
+        # add a simple moving average indicator
+        self.sma = bt.ind.SMA(self.datas[0], period=self.params.ma_period)
+
+    def log(self, txt):
+        """Logging function"""
+        dt = self.datas[0].datetime.date(0).isoformat()
+        print(f"{dt}, {txt}")
+
+    def notify_order(self, order):
+        # set no pending order
+        self.order = None
+
+    def next(self):
+        # do nothing if an order is pending
+        if self.order:
+            return
+        # check if there is already a position
+        if not self.position:
+            # buy condition
+            if self.data_close[0] > self.sma[0]:
+                self.order = self.buy()
+        else:
+            # sell condition
+            if self.data_close[0] < self.sma[0]:
+                self.order = self.sell()
+
+    def stop(self):
+        self.log(
+            f"(ma_period = {self.params.ma_period:2d}) --- Terminal Value: {self.broker.getvalue():.2f}"
+        )
 
 
 class BBandStrategy(bt.Strategy):
@@ -181,27 +221,12 @@ if __name__ == "__main__":
     data = pd.read_pickle("./data/stock1.pkl")
     df = data.loc["현대차"]
     df.set_index("date", inplace=True)
-    df = df.sort_index()["2018-1-1":"2018-3-31"]
+    df = df.sort_index()["2018-1-1":"2019-12-31"]
     df.info()
 
     data = bt.feeds.PandasData(dataname=df)
 
-    cerebro = bt.Cerebro(stdstats=False)
-    cerebro.adddata(data)
-    cerebro.broker.setcash(1000000.0)
-    cerebro.addstrategy(SmaStrategy)
-    cerebro.addobserver(bt.observers.BuySell)
-    cerebro.addobserver(bt.observers.Value)
-    cerebro.addobserver(bt.observers.Broker)
-    cerebro.addobserver(bt.observers.Trades)
-
-    print(f"Starting Portfolio Value: {cerebro.broker.getvalue():.2f}")
-    cerebro.run()
-    print(f"Final Portfolio Value: {cerebro.broker.getvalue():.2f}")
-    # cerebro.plot(iplot=False, volume=True, width=8, height=5)
-
-    # cerebro = bt.Cerebro(stdstats=False, cheat_on_open=True)
-    # cerebro.addstrategy(RsiSignalStrategy)
+    # cerebro = bt.Cerebro(stdstats=False)
     # cerebro.adddata(data)
     # cerebro.broker.setcash(1000000.0)
     # cerebro.broker.setcommission(commission=0.001)
@@ -209,21 +234,48 @@ if __name__ == "__main__":
     # cerebro.addobserver(bt.observers.Value)
     # cerebro.addobserver(bt.observers.Broker)
     # cerebro.addobserver(bt.observers.Trades)
-    # cerebro.addanalyzer(bt.analyzers.Returns, _name="returns")
-    # cerebro.addanalyzer(bt.analyzers.TimeReturn, _name="time_return")
 
-    # print("Starting Portfolio Value: %.2f" % cerebro.broker.getvalue())
-    # backtest_result = cerebro.run()
-    # print("Final Portfolio Value: %.2f" % cerebro.broker.getvalue())
-    # print(backtest_result[0].analyzers.returns.get_analysis())
-    # cerebro.plot(iplot=False, volume=False)
+    # cerebro.addstrategy(SmaStrategy)
+    # print(f"Starting Portfolio Value: {cerebro.broker.getvalue():.2f}")
+    # cerebro.run()
+    # print(f"Final Portfolio Value: {cerebro.broker.getvalue():.2f}")
+    # cerebro.plot(iplot=False, volume=True, width=8, height=5)[0][0].savefig("images/sma.png", dpi=300)
 
-    # print(backtest_result[0].analyzers)
-    # returns_dict = backtest_result[0].analyzers.time_return.get_analysis()
-    # returns_df = pd.DataFrame(
-    #     list(returns_dict.items()), columns=["report_date", "return"]
-    # ).set_index("report_date")
-    # returns_df.plot(title="Portfolio returns")
-    # plt.tight_layout()
-    # plt.savefig("images/ch2_im9.png")
+    # cerebro.optstrategy(SmaStrategy1, ma_period=range(10, 31))
+    # cerebro.run()
+
+    cerebro = bt.Cerebro(stdstats=False, cheat_on_open=True)
+    cerebro.addstrategy(RsiSignalStrategy)
+    cerebro.adddata(data)
+    cerebro.broker.setcash(1000000.0)
+    cerebro.broker.setcommission(commission=0.001)
+    cerebro.addobserver(bt.observers.BuySell)
+    cerebro.addobserver(bt.observers.Value)
+    cerebro.addobserver(bt.observers.Broker)
+    cerebro.addobserver(bt.observers.Trades)
+    cerebro.addanalyzer(bt.analyzers.Returns, _name="returns")
+    cerebro.addanalyzer(bt.analyzers.TimeReturn, _name="time_return")
+    cerebro.addanalyzer(bt.analyzers.PyFolio, _name="PyFolio")
+
+    print("Starting Portfolio Value: %.2f" % cerebro.broker.getvalue())
+    backtest_result = cerebro.run()
+    print("Final Portfolio Value: %.2f" % cerebro.broker.getvalue())
+    print(backtest_result[0].analyzers.returns.get_analysis())
+    cerebro.plot(iplot=False, volume=False)[0][0].savefig("images/rsi_strat_01.png", dpi=300)
+
+    print(backtest_result[0].analyzers)
+    returns_dict = backtest_result[0].analyzers.time_return.get_analysis()
+    returns_df = pd.DataFrame(
+        list(returns_dict.items()), columns=["report_date", "return"]
+    ).set_index("report_date")
+    returns_df.plot(title="Portfolio returns")
+    plt.tight_layout()
+    plt.savefig("images/rsi_strat_02.png")
+
+    strat = backtest_result[0]
+    portfolio_stats = strat.analyzers.getbyname("PyFolio")
+    returns, positions, transactions, gross_lev = portfolio_stats.get_pf_items()
+    returns.index = returns.index.tz_convert(None)
+
+    quantstats.reports.html(returns, output="images/stats.html", title="RSI strategy")
 

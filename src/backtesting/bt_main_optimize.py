@@ -12,7 +12,15 @@ data = bt.feeds.YahooFinanceCSVData(
     todate=datetime.datetime(2017, 12, 31),
 )
 
+# data = bt.feeds.YahooFinanceData(
+#     dataname="036570.KS",
+#     fromdate=datetime.datetime(2019, 1, 1),
+#     todate=datetime.datetime(2020, 12, 31),
+# )
+# print(data)
+
 cerebro.adddata(data)
+cerebro.broker.setcash(1000000.0)
 
 # Add strategy to Cerebro
 cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sharpe_ratio")
