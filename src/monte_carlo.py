@@ -114,7 +114,7 @@ def gaussian_brownian_motion(data):
 def value_at_risk(data):
     np.random.seed(42)
     assets = data.columns.values
-    SHARES = [5, 5, 5, 5]
+    SHARES = [10, 5, 10, 1]
     T = 1
     N_SIMS = 10 ** 5
     ic(assets)
@@ -128,6 +128,7 @@ def value_at_risk(data):
 
     cov_mat = returns.cov()
     ic(cov_mat)
+    ic(returns.corr())
 
     # 6. Perform the Cholesky decomposition of the covariance matrix:
     chol_mat = np.linalg.cholesky(cov_mat)
@@ -138,7 +139,6 @@ def value_at_risk(data):
 
     r = np.mean(returns, axis=0).values
     sigma = np.std(returns, axis=0).values
-    S_0 = data.values
     S_0 = data.values[-1, :]
     P_0 = np.sum(SHARES * S_0)
     # 9. Calculate the terminal price of the considered stocks:
@@ -151,7 +151,7 @@ def value_at_risk(data):
     percentiles = [0.01, 0.1, 1.0]
     var = np.percentile(P_diff_sorted, percentiles)
     for x, y in zip(percentiles, var):
-        print(f"1-day VaR with {100-x}% confidence: {-y:.2f}$")
+        print(f"1-day VaR with {100-x}% confidence: {-y:,.0f} 원")
     df = pd.DataFrame(P_diff)
     print(df.describe())
 
@@ -161,10 +161,10 @@ def value_at_risk(data):
     plt.tight_layout()
     plt.savefig("images/ch6_im4.png")
 
-    var = np.percentile(P_diff_sorted, 5)
-    expected_shortfall = P_diff_sorted[P_diff_sorted <= var].mean()
+    var = int(np.percentile(P_diff_sorted, 5))
+    expected_shortfall = int(P_diff_sorted[P_diff_sorted <= var].mean())
     print(
-        f"The 1-day 95% VaR is {-var:.2f}$, and the accompanying Expected Shortfall is {-expected_shortfall:.2f}$."
+        f"The 1-day 95% VaR is {-var:,d} 원, and the accompanying Expected Shortfall is {-expected_shortfall:,d} 원."
     )
 
 
@@ -173,9 +173,7 @@ if __name__ == "__main__":
     data = df.loc["현대차"]
     data.set_index("date", inplace=True)
     data = data.sort_index()["2010-1":"2021-12"]
-    data.info()
     ic(data.head())
-
     gaussian_brownian_motion(data)
 
     data = df.loc[:, ["date", "close"]].reset_index()
