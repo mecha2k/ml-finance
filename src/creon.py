@@ -194,6 +194,6 @@ if __name__ == "__main__":
     print(prices.head(10))
 
     plt.rc("font", family="Malgun Gothic")
-    prices["카카오"].plot(figsize=(12, 8))
+    prices["카카오"].plot(title="kakao", figsize=(12, 8))
     plt.grid(True)
     plt.show()
