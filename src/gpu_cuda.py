@@ -11,7 +11,7 @@ print(device_lib.list_local_devices())
 print(tf.__version__)
 print("opencv version : ", cv2.__version__)
 print("opencv cuda count : ", cv2.cuda.getCudaEnabledDeviceCount())
-# print(cv2.cuda.printCudaDeviceInfo(0))
+print(cv2.cuda.printCudaDeviceInfo(0))
 print(sys.path)
 
 gpus = tf.config.experimental.list_physical_devices("GPU")

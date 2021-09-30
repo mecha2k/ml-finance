@@ -11,7 +11,7 @@ from icecream import ic
 
 plt.style.use("seaborn")
 plt.rcParams["axes.unicode_minus"] = False
-plt.rcParams["font.family"] = "Malgun Gothic"
+plt.rcParams["font.family"] = "AppleGothic"
 plt.rcParams["font.size"] = 18
 plt.rcParams["axes.titlesize"] = 24
 plt.rcParams["axes.labelsize"] = 18

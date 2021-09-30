@@ -15,7 +15,7 @@ config = {
     # "save": "finance-reader-sample.png"
 }
 fdr.chart.config(config=config)
-fdr.chart.plot(df, save="finance-reader-sample.png")
+fdr.chart.plot(df, save="images/finance-reader-sample.png")
 
 
 # # 삼성전자(005930) 전체 (1996-11-05 ~ 현재)
