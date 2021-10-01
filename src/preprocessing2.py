@@ -6,12 +6,13 @@ import scipy.stats as scs
 import statsmodels.api as sm
 import statsmodels.tsa.api as smt
 
+from talib import RSI
 from datetime import datetime
 from icecream import ic
 
 plt.style.use("seaborn")
 plt.rcParams["axes.unicode_minus"] = False
-plt.rcParams["font.family"] = "AppleGothic"
+plt.rcParams["font.family"] = "D2Coding ligature"
 plt.rcParams["font.size"] = 18
 plt.rcParams["axes.titlesize"] = 24
 plt.rcParams["axes.labelsize"] = 18
@@ -25,16 +26,88 @@ plt.rcParams["figure.figsize"] = [12, 8]
 if __name__ == "__main__":
     src_data = "./data/stock1.pkl"
     tickers = {"현대차": "A005380", "삼성전자": "A005930", "네이버": "A035420", "카카오": "A035720"}
-
     data = pd.read_pickle(src_data)
     data = data.reset_index()
-    # data = data["2018":"2021"]
-    ic(data.head())
-    # data = data.loc[:, ["date", "close"]].reset_index()
-    # prices = data.pivot(index="date", columns="ticker", values="close")
-    # prices = prices["2018":"2021"]
-    # ic(prices.head())
+    data = data.set_index(["ticker", "date"]).drop("level_1", axis=1).sort_index()
+    data1 = data.loc[pd.IndexSlice["현대차", "2018":"2021"], :]
+    data2 = data.loc["현대차"]["2018":"2021"]
 
-    # prices.plot()
-    # plt.grid(True)
-    # plt.savefig("images/stocks01.png", bbox_inches="tight")
+    ic(data1.head())
+    ic(data1.index.names)
+    ic(data2.head())
+    ic(data2.index.names)
+
+    data2["close"].plot()
+    plt.title("현대차")
+    plt.savefig("images/stocks01.png", bbox_inches="tight")
+
+    data = data1.copy()
+    data["close_vol"] = data["close"].mul(data["volume"], axis=0)
+    data["close_vol1"] = (
+        data.groupby("ticker", group_keys=False, as_index=True)
+        .close_vol.rolling(window=20)
+        .mean()
+        .fillna(0)
+        .mul(1e-3)
+        .reset_index(level=0, drop=True)
+    )
+    data["vol_rank"] = data.groupby("date").close_vol.rank(ascending=False)
+    data["rsi"] = data.groupby(level="ticker").close.apply(RSI)
+    ic(data.tail())
+
+    fig, ax = plt.subplots(nrows=2, ncols=1)
+    data.loc["현대차"]["close"].plot(ax=ax[0])
+    data.loc["현대차"]["rsi"].plot(ax=ax[1])
+    plt.legend()
+    plt.savefig("images/stocks02.png", bbox_inches="tight")
+
+    lags = [1, 5, 10, 20, 40, 60]
+    returns = data.groupby(level="ticker").close.pct_change()
+    percentiles = [0.0001, 0.001, 0.01]
+    percentiles += [1 - p for p in percentiles]
+
+    ic(
+        returns.describe(percentiles=percentiles).iloc[2:]
+        # .to_frame("percentiles")
+        # .style.format(lambda x: f"{x:,.2%}")
+    )
+
+    q = 0.0001
+    for lag in lags:
+        data[f"return_{lag}d"] = (
+            data.groupby(level="ticker")
+            .close.pct_change(lag)
+            .pipe(lambda x: x.clip(lower=x.quantile(q), upper=x.quantile(1 - q)))
+            .add(1)
+            .pow(1 / lag)
+            .sub(1)
+        )
+
+    for t in [1, 2, 3, 4, 5]:
+        for lag in [1, 5, 10, 20]:
+            data[f"return_{lag}d_lag{t}"] = data.groupby(level="ticker")[f"return_{lag}d"].shift(
+                t * lag
+            )
+
+    for t in [1, 5, 10, 20]:
+        data[f"target_{t}d"] = data.groupby(level="ticker")[f"return_{t}d"].shift(-t)
+    ic(data.head())
+
+    data.iloc[:100].to_csv("data/price_lag.csv")
+
+    # data = data.join(stocks[["sector"]])
+    # data["year"] = data.index.get_level_values("date").year
+    # data["month"] = data.index.get_level_values("date").month
+    # data.info(show_counts=True)
+    # data.assign(sector=pd.factorize(data.sector, sort=True)[0]).to_hdf(
+    #     "../data/lin_models.h5", "model_data/no_dummies"
+    # )
+    # data = pd.get_dummies(
+    #     data,
+    #     columns=["year", "month", "sector"],
+    #     prefix=["year", "month", ""],
+    #     prefix_sep=["_", "_", ""],
+    #     drop_first=True,
+    # )
+    # data.info(show_counts=True)
+
