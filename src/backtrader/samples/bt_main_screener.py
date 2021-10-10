@@ -9,7 +9,7 @@ cerebro = bt.Cerebro()
 instruments = ['TSLA', 'AAPL', 'GE', 'GRPN']
 for ticker in instruments:
 	data = bt.feeds.YahooFinanceCSVData(
-		dataname='{}.csv'.format(ticker),
+		dataname='backtrader/samples/{}.csv'.format(ticker),
 		fromdate=datetime.datetime(2016, 1, 1),
 		todate=datetime.datetime(2017, 10, 30),
 	)

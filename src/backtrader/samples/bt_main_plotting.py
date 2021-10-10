@@ -12,7 +12,7 @@ cerebro = bt.Cerebro(stdstats=False)
 
 # Set data parameters and add to Cerebro
 data1 = bt.feeds.YahooFinanceCSVData(
-    dataname="backtesting/TSLA.csv",
+    dataname="backtrader/samples/TSLA.csv",
     fromdate=datetime.datetime(2018, 1, 1),
     todate=datetime.datetime(2020, 1, 1),
 )
