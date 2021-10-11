@@ -48,7 +48,6 @@ cerebro.broker.setcommission(commission=0.0025)
 cerebro.addanalyzer(bt.analyzers.PyFolio, _name="PyFolio")
 
 if __name__ == "__main__":
-
     start_portfolio_value = cerebro.broker.getvalue()
     results = cerebro.run()
     strat = results[0]

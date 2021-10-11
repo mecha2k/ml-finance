@@ -22,21 +22,15 @@ data = bt.feeds.YahooFinanceCSVData(
 cerebro.adddata(data)
 cerebro.broker.setcash(1000000.0)
 
-# Add strategy to Cerebro
 cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sharpe_ratio")
 cerebro.optstrategy(
     MAcrossover, pfast=range(5, 20), pslow=range(50, 100)
-)  # Add the trading strategy
-
-# Default position size
+)
 cerebro.addsizer(bt.sizers.SizerFix, stake=3)
 
 if __name__ == "__main__":
-
     optimized_runs = cerebro.run()
-
     final_results_list = []
-    # Iterate through list of lists
     for run in optimized_runs:
         for strategy in run:
             PnL = round(strategy.broker.get_value() - 10000, 2)
@@ -45,7 +39,6 @@ if __name__ == "__main__":
                 [strategy.params.pfast, strategy.params.pslow, PnL, sharpe["sharperatio"],]
             )
     sort_by_sharpe = sorted(final_results_list, key=lambda x: x[3], reverse=True)
-    # Print top 5 results sorted by Sharpe Ratio
     for line in sort_by_sharpe[:5]:
         print(line)
 
