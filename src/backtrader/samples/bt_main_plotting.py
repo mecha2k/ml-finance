@@ -53,27 +53,5 @@ plotinfo = dict(
     plotylimited=True,
 )
 
-# Run Cerebro Engine
 cerebro.run()
-cerebro.plot(**plotinfo)
-
-
-"""
-REFERENCE: Plotting options
-plotinfo = dict(plot=True,
-                subplot=True,
-                plotname='',
-                plotskip=False,
-                plotabove=False,
-                plotlinelabels=False,
-                plotlinevalues=True,
-                plotvaluetags=True,
-                plotymargin=0.0,
-                plotyhlines=[],
-                plotyticks=[],
-                plothlines=[],
-                plotforce=False,
-                plotmaster=None,
-                plotylimited=True,
-           )
-"""
+cerebro.plot(iplot=False, volume=True, width=16, height=10, **plotinfo)
