@@ -41,7 +41,6 @@ cerebro.addstrategy(BtcSentiment)
 cerebro.broker.setcommission(commission=0.0025)
 
 if __name__ == "__main__":
-
     start_portfolio_value = cerebro.broker.getvalue()
     cerebro.run()
     end_portfolio_value = cerebro.broker.getvalue()
@@ -50,3 +49,5 @@ if __name__ == "__main__":
     print(f"Starting Portfolio Value: {start_portfolio_value:2f}")
     print(f"Final Portfolio Value: {end_portfolio_value:2f}")
     print(f"PnL: {pnl:.2f}")
+
+    cerebro.plot(iplot=False, volume=True, width=16, height=10)
