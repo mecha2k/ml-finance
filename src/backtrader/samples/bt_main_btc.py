@@ -39,6 +39,7 @@ cerebro.addstrategy(BtcSentiment)
 
 # Add commission rate of 0.1% per trade
 cerebro.broker.setcommission(commission=0.0025)
+cerebro.addwriter(bt.WriterFile, csv=True, out="backtrader/samples/sample_out.csv")
 
 if __name__ == "__main__":
     start_portfolio_value = cerebro.broker.getvalue()
