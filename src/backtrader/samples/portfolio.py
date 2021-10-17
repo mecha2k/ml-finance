@@ -12,7 +12,7 @@ cerebro = bt.Cerebro()
 # Set data parameters and add to Cerebro
 # First data feed - BTC Price Data
 data1 = bt.feeds.YahooFinanceCSVData(
-    dataname="backtesting/BTCUSD_Weekly.csv",
+    dataname="backtrader/samples/BTCUSD_Weekly.csv",
     fromdate=datetime.datetime(2018, 1, 1),
     todate=datetime.datetime(2020, 1, 1),
     timeframe=bt.TimeFrame.Weeks,
@@ -21,7 +21,7 @@ cerebro.adddata(data1)
 
 # Second data feed - BTC Google Trends Data
 data2 = bt.feeds.GenericCSVData(
-    dataname="backtesting/BTC_Gtrends.csv",
+    dataname="backtrader/samples/BTC_Gtrends.csv",
     fromdate=datetime.datetime(2018, 1, 1),
     todate=datetime.datetime(2020, 1, 1),
     nullvalue=0.0,
@@ -48,7 +48,6 @@ cerebro.broker.setcommission(commission=0.0025)
 cerebro.addanalyzer(bt.analyzers.PyFolio, _name="PyFolio")
 
 if __name__ == "__main__":
-
     start_portfolio_value = cerebro.broker.getvalue()
     results = cerebro.run()
     strat = results[0]
@@ -63,4 +62,4 @@ if __name__ == "__main__":
     returns, positions, transactions, gross_lev = portfolio_stats.get_pf_items()
     returns.index = returns.index.tz_convert(None)
 
-    quantstats.reports.html(returns, output="backtesting/stats.html", title="BTC Sentiment")
+    quantstats.reports.html(returns, output="backtrader/samples/stats.html", title="BTC Sentiment")

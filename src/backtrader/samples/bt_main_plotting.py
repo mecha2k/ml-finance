@@ -12,7 +12,7 @@ cerebro = bt.Cerebro(stdstats=False)
 
 # Set data parameters and add to Cerebro
 data1 = bt.feeds.YahooFinanceCSVData(
-    dataname="backtesting/TSLA.csv",
+    dataname="backtrader/samples/TSLA.csv",
     fromdate=datetime.datetime(2018, 1, 1),
     todate=datetime.datetime(2020, 1, 1),
 )
@@ -53,27 +53,5 @@ plotinfo = dict(
     plotylimited=True,
 )
 
-# Run Cerebro Engine
 cerebro.run()
-cerebro.plot(**plotinfo)
-
-
-"""
-REFERENCE: Plotting options
-plotinfo = dict(plot=True,
-                subplot=True,
-                plotname='',
-                plotskip=False,
-                plotabove=False,
-                plotlinelabels=False,
-                plotlinevalues=True,
-                plotvaluetags=True,
-                plotymargin=0.0,
-                plotyhlines=[],
-                plotyticks=[],
-                plothlines=[],
-                plotforce=False,
-                plotmaster=None,
-                plotylimited=True,
-           )
-"""
+cerebro.plot(iplot=False, volume=True, width=16, height=10, **plotinfo)
