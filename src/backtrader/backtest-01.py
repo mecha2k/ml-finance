@@ -24,10 +24,9 @@ class RsiSignalStrategy(bt.SignalStrategy):
 
 
 class MAcrossover(bt.Strategy):
-    # Moving average parameters
     params = (
         ("pfast", 20),
-        ("pslow", 50),
+        ("pslow", 60),
     )
 
     def log(self, txt, dt=None):
@@ -108,7 +107,7 @@ if __name__ == "__main__":
     cerebro.addstrategy(MAcrossover)
 
     data = pd.read_pickle("data/현대차.pkl")
-    data = data["2020-10":"2021-12"]
+    data = data["2021-1":"2021-12"]
     ic(data.head())
 
     data = bt.feeds.PandasData(dataname=data)
