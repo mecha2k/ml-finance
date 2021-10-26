@@ -6,7 +6,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv(verbose=True)
-api_key = os.getenv("ecos_api")
+api_key = os.getenv("ecos_key")
 
 # import xml.etree.ElementTree as ET
 
