@@ -9,20 +9,94 @@ from datetime import datetime
 from dotenv import load_dotenv
 from icecream import ic
 
+fs_col_names = {
+    "rcept_no": "접수번호",
+    "bsns_year": "사업연도",
+    "corp_code": "회사코드",
+    "stock_code": "종목코드",
+    "reprt_code": "보고서코드",
+    "account_nm": "계정명",
+    "fs_div": "개별/연결구분",
+    "fs_nm": "개별/연결명",
+    "sj_div": "재무제표구분",
+    "sj_nm": "재무제표명",
+    "thstrm_nm": "당기명",
+    "thstrm_dt": "당기일자",
+    "thstrm_amount": "당기금액",
+    "thstrm_add_amount": "당기누적금액",
+    "frmtrm_nm": "전기명",
+    "frmtrm_dt": "전기일자",
+    "frmtrm_amount": "전기금액",
+    "frmtrm_add_amount": "전기누적금액",
+    "bfefrmtrm_nm": "전전기명",
+    "bfefrmtrm_dt": "전전기일자",
+    "bfefrmtrm_amount": "전전기금액",
+    "ord": "계정과목 정렬순서",
+}
+
+
+def get_year_fs(corp_name, year):
+    rep_codes = {"1분기": "11013", "반기": "11012", "3분기": "11014", "연간": "11011"}
+    rep_times = {
+        "1분기": datetime(year, 3, 31),
+        "반기": datetime(year, 6, 30),
+        "3분기": datetime(year, 9, 30),
+        "연간": datetime(year, 12, 31),
+    }
+
+    rep_data = list()
+    for key, value in rep_codes.items():
+        fs = dart.finstate(corp_name, year, reprt_code=value)
+        fs.rename(columns=fs_col_names, inplace=True)
+        fs = fs.loc[fs["개별/연결구분"] == "CFS"]
+        fs = fs[["계정명", "당기금액"]].set_index("계정명").rename(columns={"당기금액": corp_name})
+        rep_data.append(fs)
+
+    return pd.concat(rep_data, keys=rep_times.values(), names=["시간", "계정명"])
+
+
 if __name__ == "__main__":
     load_dotenv(verbose=True)
     api_key = os.getenv("dart_key")
     dart = OpenDartReader(api_key)
 
-    start = datetime(2020, 1, 1)
-    end = datetime(2021, 8, 31)
+    start = datetime(2018, 1, 1)
+    end = datetime(2020, 12, 31)
 
-    data = dart.list("005930", start="2019-01-01", end="2019-12-31")
-    ic(data.head())
-    ic(dart.company("005930"))
-    data = dart.finstate("005930, 000660, 005380", 2018)
-    ic(dart.xbrl_taxonomy("BS1"))
-    print(data)
+    data = dart.corp_codes.copy()
+    name = data.loc[data.stock_code == "005930", "corp_name"].values[0]
+
+    for tm in pd.date_range(start=start, end=end, freq="A"):
+        print(tm.year)
+
+    # print(fs.info())
+    # print(fs.head(20))
+
+    # print(fs.계정명)
+    # fs.to_csv("data/samsung.csv")
+
+    # fs_all = dart.finstate_all(name, 2018)
+    # fs_all.to_csv("data/samsung1.csv")
+    # fs_all.info()
+
+    # print(data.stock_code[data.stock_code == " "].value_counts())
+    # data = data.loc[data.stock_code != " "]
+    # print(data.loc[data.stock_code == "005930"])
+    # data = data.dropna(axis=0, how="any", subset=["stock_code"])
+    # print(data.info())
+    # print(data.head())
+    # data = dart.list("005930", start=start, end=end)
+    # print(data)
+    # data = dart.list("005930", start="2010-01-01", end="2021-12-31")
+    # data.info()
+    # ic(data.head())
+    # ic(dart.company("005930"))
+    # ic(dart.xbrl_taxonomy("BS1"))
+    # data = dart.finstate("005930, 000660, 005380", 2018)
+    # print(data)
+
+    # samsung = dart.finstate("삼성전자", 2018)
+    # print(samsung)
 
     # # == 1. 공시정보 검색 ==
     # # 삼성전자 2019-07-01 하루 동안 공시 목록 (날짜에 다양한 포맷이 가능합니다)
@@ -56,7 +130,7 @@ if __name__ == "__main__":
     # dart.list(start='20190101', end='20190331', kind='A')
 
     # 기업의 개황정보
-    print(dart.company("005930"))
+    # print(dart.company("005930"))
 
     # # 회사명에 삼성전자가 포함된 회사들에 대한 개황정보
     # print(dart.company_by_name("삼성전자"))
@@ -79,8 +153,8 @@ if __name__ == "__main__":
 
     # ==== 3. 상장기업 재무정보 ====
     # 삼성전자 2018 재무제표
-    fs = dart.finstate("삼성전자", 2018)  # 사업보고서
-    print(fs)
+    # fs = dart.finstate("삼성전자", 2018)  # 사업보고서
+    # print(fs)
 
     # # 삼성전자 2018Q1 재무제표
     # dart.finstate('삼성전자', 2018, reprt_code='11013')
