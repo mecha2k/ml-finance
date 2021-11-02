@@ -3,6 +3,7 @@ import pandas_datareader as web
 import matplotlib.pyplot as plt
 import seaborn as sns
 import OpenDartReader
+import FinanceDataReader as fdr
 import os
 
 from datetime import datetime
@@ -15,7 +16,9 @@ fs_col_names = {
     "corp_code": "회사코드",
     "stock_code": "종목코드",
     "reprt_code": "보고서코드",
+    "account_id": "계정ID",
     "account_nm": "계정명",
+    "account_detail": "계정상세",
     "fs_div": "개별/연결구분",
     "fs_nm": "개별/연결명",
     "sj_div": "재무제표구분",
@@ -27,48 +30,129 @@ fs_col_names = {
     "frmtrm_nm": "전기명",
     "frmtrm_dt": "전기일자",
     "frmtrm_amount": "전기금액",
+    "frmtrm_q_nm": "전기명(분/반기)",
+    "frmtrm_q_amount": "전기금액(분/반기)",
     "frmtrm_add_amount": "전기누적금액",
     "bfefrmtrm_nm": "전전기명",
     "bfefrmtrm_dt": "전전기일자",
     "bfefrmtrm_amount": "전전기금액",
     "ord": "계정과목 정렬순서",
 }
+rep_codes = {"1분기": "11013", "반기": "11012", "3분기": "11014", "연간": "11011"}
 
 
-def get_year_fs(corp_name, year):
-    rep_codes = {"1분기": "11013", "반기": "11012", "3분기": "11014", "연간": "11011"}
-    rep_times = {
-        "1분기": datetime(year, 3, 31),
-        "반기": datetime(year, 6, 30),
-        "3분기": datetime(year, 9, 30),
-        "연간": datetime(year, 12, 31),
-    }
+def get_corp_fs(corp_name, corp_code, start, end):
 
-    rep_data = list()
-    for key, value in rep_codes.items():
-        fs = dart.finstate(corp_name, year, reprt_code=value)
-        fs.rename(columns=fs_col_names, inplace=True)
-        fs = fs.loc[fs["개별/연결구분"] == "CFS"]
-        fs = fs[["계정명", "당기금액"]].set_index("계정명").rename(columns={"당기금액": corp_name})
-        rep_data.append(fs)
+    corp_fs, corp_fs_all = [], []
+    for t in pd.date_range(start=start, end=end, freq="A"):
+        rep_times = {
+            "1분기": datetime(t.year, 3, 31),
+            "반기": datetime(t.year, 6, 30),
+            "3분기": datetime(t.year, 9, 30),
+            "연간": datetime(t.year, 12, 31),
+        }
 
-    return pd.concat(rep_data, keys=rep_times.values(), names=["시간", "계정명"])
+        fs_brf, fs_all = [], []
+        for key, value in rep_codes.items():
+            fs = dart.finstate(corp_code, t.year, reprt_code=value)
+            fs.rename(columns=fs_col_names, inplace=True)
+            fs = fs.loc[(fs["개별/연결구분"] == "CFS")]
+            fs = fs[["계정명", "당기금액"]].set_index("계정명")
+            fs_brf.append(fs)
+
+            fs = dart.finstate_all(corp_code, t.year, reprt_code=value)
+            fs.rename(columns=fs_col_names, inplace=True)
+            fs = fs.loc[(fs["재무제표구분"] == "BS") | (fs["재무제표구분"] == "CIS") | (fs["재무제표구분"] == "IS")]
+            fs = fs[["계정명", "당기금액"]].set_index("계정명")
+            fs_all.append(fs)
+        y_fs_brf = pd.concat(fs_brf, keys=rep_times.values(), names=["시간", "계정명"])
+        y_fs_all = pd.concat(fs_all, keys=rep_times.values(), names=["시간", "계정명"])
+        corp_fs.append(y_fs_brf)
+        corp_fs_all.append(y_fs_all)
+
+    return pd.concat(corp_fs), pd.concat(corp_fs_all)
 
 
 if __name__ == "__main__":
     load_dotenv(verbose=True)
     api_key = os.getenv("dart_key")
     dart = OpenDartReader(api_key)
+    dart_corp = dart.corp_codes.copy()
 
-    start = datetime(2018, 1, 1)
+    start = datetime(2020, 1, 1)
     end = datetime(2020, 12, 31)
 
-    data = dart.corp_codes.copy()
-    name = data.loc[data.stock_code == "005930", "corp_name"].values[0]
+    corp_list = {"삼성전자": "005930", "NAVER": "035420", "카카오": "035720", "현대차": "005380"}
+    corp_fs, corp_fs_all = [], []
+    for name, code in corp_list.items():
+        corp_name = dart_corp.loc[dart_corp.stock_code == code, "corp_name"].values[0]
+        fs, fs_all = get_corp_fs(corp_name=corp_name, corp_code=code, start=start, end=end)
+        corp_fs.append(fs)
+        corp_fs_all.append(fs_all)
+    corp_fs = pd.concat(corp_fs, axis=0, keys=corp_list.keys())
+    corp_fs_all = pd.concat(corp_fs_all, axis=0, keys=corp_list.keys())
+    corp_fs.info()
+    corp_fs_all.info()
+    corp_fs.to_pickle("data/corp_fs.pkl")
+    corp_fs_all.to_pickle("data/corp_fs_all.pkl")
 
-    for tm in pd.date_range(start=start, end=end, freq="A"):
-        print(tm.year)
+    corp_fs = pd.read_pickle("data/corp_fs.pkl")
+    corp_fs_all = pd.read_pickle("data/corp_fs_all.pkl")
+    corp_fs.info()
+    corp_fs_all.info()
+    print(corp_fs.head())
+    print(corp_fs.loc["삼성전자"].info())
 
+    corp_fs.loc["삼성전자"].to_csv("data/fs_samsung.csv", encoding="utf-8-sig")
+    corp_fs_all.loc["삼성전자"].to_csv("data/fs_all_samsung.csv", encoding="utf-8-sig")
+
+    df = fdr.DataReader(corp_list["삼성전자"], "2020")
+    print(df.head())
+
+    # config = {
+    #     "title": "삼성전자",
+    #     "width": 600,
+    #     "height": 300,
+    #     "volume": True,
+    # }
+    # fdr.chart.config(config=config)
+    # fdr.chart.plot(df)
+    # plt.show()
+
+    # print(*corp_list.values())
+    # aa = dart.xbrl_taxonomy("BS1")
+    # aa.to_csv("data/xbrl_tax.csv", encoding="utf-8-sig")
+
+    # fs = dart.finstate("005930, 035720, 005380", "2020", reprt_code="11011")
+    # fs.rename(columns=fs_col_names, inplace=True)
+    # fs.to_csv("data/corp_fs.csv", encoding="utf-8-sig")
+
+    # corp_data[0].to_csv("data/samsung.csv", encoding="utf-8-sig")
+    # corp_data[1].to_csv("data/kakao.csv", encoding="utf-8-sig")
+
+    # dup = corp_data[0].index.duplicated()
+    # print(corp_data[0].loc[dup])
+    # corp_data[0].to_csv("data/corp_fs.csv", encoding="utf-8-sig")
+    # dup = corp_data[1].index.duplicated(keep="first")
+    # print(corp_data[1].loc[dup])
+    # print(corp_data[1].index.duplicated())
+    # corp_fs = pd.concat(corp_data, axis=1, join="inner")
+    # corp_fs.to_csv("data/corp_fs.csv", encoding="utf-8-sig")
+    #
+    # corp_fs = pd.read_csv("data/corp_fs.csv", encoding="utf-8-sig")
+    # print(corp_fs.tail(16))
+    # print(corp_fs.isna().any(axis=0))
+    # print(corp_fs.isna().any(axis=1))
+    # idx = corp_fs.index[corp_fs.isna().any(axis=1)]
+    # print(corp_fs.loc[idx])
+
+    # res.to_csv("data/samsung2.csv")
+    # print(res)
+
+    # fs = dart.finstate_all("035720", "2020", reprt_code="11011")
+    # fs.rename(columns=fs_col_names, inplace=True)
+    # fs.to_csv("data/kakao1.csv", encoding="utf-8-sig")
+    # print(fs)
     # print(fs.info())
     # print(fs.head(20))
 
