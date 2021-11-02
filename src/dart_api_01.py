@@ -79,22 +79,23 @@ if __name__ == "__main__":
     dart = OpenDartReader(api_key)
     dart_corp = dart.corp_codes.copy()
 
+    corp_list = {"삼성전자": "005930", "NAVER": "035420", "카카오": "035720", "현대차": "005380"}
+
     start = datetime(2020, 1, 1)
     end = datetime(2020, 12, 31)
 
-    corp_list = {"삼성전자": "005930", "NAVER": "035420", "카카오": "035720", "현대차": "005380"}
-    corp_fs, corp_fs_all = [], []
-    for name, code in corp_list.items():
-        corp_name = dart_corp.loc[dart_corp.stock_code == code, "corp_name"].values[0]
-        fs, fs_all = get_corp_fs(corp_name=corp_name, corp_code=code, start=start, end=end)
-        corp_fs.append(fs)
-        corp_fs_all.append(fs_all)
-    corp_fs = pd.concat(corp_fs, axis=0, keys=corp_list.keys())
-    corp_fs_all = pd.concat(corp_fs_all, axis=0, keys=corp_list.keys())
-    corp_fs.info()
-    corp_fs_all.info()
-    corp_fs.to_pickle("data/corp_fs.pkl")
-    corp_fs_all.to_pickle("data/corp_fs_all.pkl")
+    # corp_fs, corp_fs_all = [], []
+    # for name, code in corp_list.items():
+    #     corp_name = dart_corp.loc[dart_corp.stock_code == code, "corp_name"].values[0]
+    #     fs, fs_all = get_corp_fs(corp_name=corp_name, corp_code=code, start=start, end=end)
+    #     corp_fs.append(fs)
+    #     corp_fs_all.append(fs_all)
+    # corp_fs = pd.concat(corp_fs, axis=0, keys=corp_list.keys())
+    # corp_fs_all = pd.concat(corp_fs_all, axis=0, keys=corp_list.keys())
+    # corp_fs.info()
+    # corp_fs_all.info()
+    # corp_fs.to_pickle("data/corp_fs.pkl")
+    # corp_fs_all.to_pickle("data/corp_fs_all.pkl")
 
     corp_fs = pd.read_pickle("data/corp_fs.pkl")
     corp_fs_all = pd.read_pickle("data/corp_fs_all.pkl")
@@ -106,8 +107,8 @@ if __name__ == "__main__":
     corp_fs.loc["삼성전자"].to_csv("data/fs_samsung.csv", encoding="utf-8-sig")
     corp_fs_all.loc["삼성전자"].to_csv("data/fs_all_samsung.csv", encoding="utf-8-sig")
 
-    df = fdr.DataReader(corp_list["삼성전자"], "2020")
-    print(df.head())
+    df = fdr.DataReader(corp_list["삼성전자"], start=start, end=end)
+    print(df.tail())
 
     # config = {
     #     "title": "삼성전자",
