@@ -39,10 +39,10 @@ fs_col_names = {
     "ord": "계정과목 정렬순서",
 }
 rep_codes = {"1분기": "11013", "반기": "11012", "3분기": "11014", "연간": "11011"}
+idx = pd.MultiIndex
 
 
-def get_corp_fs(corp_name, corp_code, start, end):
-
+def get_corp_fs(corp_code, start, end):
     corp_fs, corp_fs_all = [], []
     for t in pd.date_range(start=start, end=end, freq="A"):
         rep_times = {
@@ -81,34 +81,63 @@ if __name__ == "__main__":
 
     corp_list = {"삼성전자": "005930", "NAVER": "035420", "카카오": "035720", "현대차": "005380"}
 
-    start = datetime(2020, 1, 1)
+    start = datetime(2016, 1, 1)
     end = datetime(2020, 12, 31)
 
     # corp_fs, corp_fs_all = [], []
     # for name, code in corp_list.items():
     #     corp_name = dart_corp.loc[dart_corp.stock_code == code, "corp_name"].values[0]
-    #     fs, fs_all = get_corp_fs(corp_name=corp_name, corp_code=code, start=start, end=end)
+    #     fs, fs_all = get_corp_fs(corp_code=code, start=start, end=end)
     #     corp_fs.append(fs)
     #     corp_fs_all.append(fs_all)
+    #     print(f"{corp_name} fs downloaded...")
     # corp_fs = pd.concat(corp_fs, axis=0, keys=corp_list.keys())
     # corp_fs_all = pd.concat(corp_fs_all, axis=0, keys=corp_list.keys())
-    # corp_fs.info()
-    # corp_fs_all.info()
     # corp_fs.to_pickle("data/corp_fs.pkl")
     # corp_fs_all.to_pickle("data/corp_fs_all.pkl")
 
     corp_fs = pd.read_pickle("data/corp_fs.pkl")
     corp_fs_all = pd.read_pickle("data/corp_fs_all.pkl")
-    corp_fs.info()
-    corp_fs_all.info()
-    print(corp_fs.head())
-    print(corp_fs.loc["삼성전자"].info())
 
-    corp_fs.loc["삼성전자"].to_csv("data/fs_samsung.csv", encoding="utf-8-sig")
-    corp_fs_all.loc["삼성전자"].to_csv("data/fs_all_samsung.csv", encoding="utf-8-sig")
+    ticker = "삼성전자"
+    samsung = [corp_fs.loc[ticker], corp_fs_all.loc[ticker]]
+    samsung = pd.concat(samsung)
 
-    df = fdr.DataReader(corp_list["삼성전자"], start=start, end=end)
-    print(df.tail())
+    annual = pd.date_range(start=start, end=end, freq="A")
+    samsung = samsung.loc[annual]
+    # samsung = samsung.loc[annual].reset_index().pivot(index="계정명", columns="시간", values="당기금액")
+    samsung.to_csv("data/fs_samsung.csv", encoding="utf-8-sig")
+    print(samsung.head())
+
+    idx = pd.IndexSlice
+    print(samsung.loc[idx["2020", "매출액"], :].values[0][0])
+
+    account = ["매출액", "영업이익", "법인세차감전 순이익", "당기순이익", "자산총계", "부채총계", "자본총계", "기본주당이익(손실)"]
+    df = samsung.loc[idx["2020", account], :]
+    df = df["당기금액"].str.replace(",", "").astype(int)
+    print(df)
+    print(df.dtypes)
+
+    # print(len(data))
+    # data = data["당기금액"].to_numpy()
+    # print(data.head(10))
+    # data = pd.to_numeric(data)
+    # print(data)
+
+    # aa = samsung.loc["2020"]
+    # bb = aa.loc["매출액"]
+    # print(aa)
+    # print(bb)
+
+    # df = fdr.DataReader(corp_list["삼성전자"], start=start, end=end)
+    # print(df.tail())
+
+    # samsung = (
+    #     samsung.reset_index()
+    #     .drop_duplicates(subset="계정명", keep="first")
+    #     .set_index(["시간", "계정명"])
+    #     .sort_index(level=0)
+    # )
 
     # config = {
     #     "title": "삼성전자",
