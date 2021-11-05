@@ -10,6 +10,10 @@ from datetime import datetime
 from dotenv import load_dotenv
 from icecream import ic
 
+
+pd.set_option("display.float_format", lambda x: "%.1f" % x)
+pd.set_option("max_columns", None)
+
 fs_col_names = {
     "rcept_no": "접수번호",
     "bsns_year": "사업연도",
@@ -115,25 +119,37 @@ if __name__ == "__main__":
     account = ["매출액", "영업이익", "법인세차감전 순이익", "당기순이익", "자산총계", "부채총계", "자본총계", "기본주당이익(손실)"]
     df = samsung.loc[idx["2020", account], :]
     df = df["당기금액"].str.replace(",", "").astype(int)
-    df = df.reset_index().drop_duplicates(subset="계정명", keep="last").set_index(["시간", "계정명"])
-    print(df.head(20))
-    print(df.dtypes)
+    df = df.reset_index().drop_duplicates(subset="계정명", keep="last").drop(["시간"], axis=1)
 
-    br_col_names = {
+    br_div_col_names = {
         "rcept_no": "접수번호",
         "corp_cls": "법인구분",
         "corp_code": "고유번호",
         "corp_name": "법인명",
-        "se": "구분",  # 유상증자(주주배정), 전환권행사 등
+        "se": "구분",  # 배당
         "stock_knd": "주식종류",
         "thstrm": "당기",
         "frmtrm": "전기",
         "lwfr": "전전기",
     }
 
-    # 사업보고서 (business report)
+    br_minor_col_names = {
+        "rcept_no": "접수번호",
+        "corp_cls": "법인구분",
+        "corp_code": "고유번호",
+        "corp_name": "법인명",
+        "se": "구분",  # 소액주주
+        "shrholdr_co": "주주수",
+        "shrholdr_tot_co": "전체주주수",
+        "shrholdr_rate": "주주비율",
+        "hold_stock_co": "보유주식수",
+        "stock_tot_co": "총발행주식수",
+        "hold_stock_rate": "보유주식비율",
+    }
+
+    # 사업보고서 (business report) : 배당
     br = dart.report(corp="005930", key_word="배당", bsns_year=2020, reprt_code="11011")
-    br.rename(columns=br_col_names, inplace=True)
+    br.rename(columns=br_div_col_names, inplace=True)
     br.to_csv("data/br_samsung.csv", encoding="utf-8-sig")
 
     EPS = br.loc[(br["구분"] == "(연결)주당순이익(원)"), "당기"].values[0]
@@ -141,6 +157,19 @@ if __name__ == "__main__":
     DPS = br.loc[(br["구분"] == "주당 현금배당금(원)") & (br["주식종류"] == "보통주"), "당기"].values[0]
     Yield = br.loc[(br["구분"] == "현금배당수익률(%)") & (br["주식종류"] == "보통주"), "당기"].values[0]
     print(EPS, TD, DPS, Yield)
+
+    # 사업보고서 (business report) : 소액주주
+    br = dart.report(corp="005930", key_word="소액주주", bsns_year="2020", reprt_code="11011")
+    br.rename(columns=br_minor_col_names, inplace=True)
+    print(br)
+
+    # df.loc["주당순이익"] = EPS
+    df = df.append(["주당순이익", EPS], ignore_index=True)
+    # aa = pd.DataFrame([EPS], columns="당기금액", index="주당순이익")
+    # print(aa)
+
+    print(df.head(20))
+    print(df.dtypes)
 
     # dv_dps   = dv[dv['se'] == '주당 현금배당금(원)']
     # dv_eps   = dv[dv['se'].str.contains('주당순이익')]
