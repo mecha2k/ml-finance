@@ -115,8 +115,42 @@ if __name__ == "__main__":
     account = ["매출액", "영업이익", "법인세차감전 순이익", "당기순이익", "자산총계", "부채총계", "자본총계", "기본주당이익(손실)"]
     df = samsung.loc[idx["2020", account], :]
     df = df["당기금액"].str.replace(",", "").astype(int)
-    print(df)
+    df = df.reset_index().drop_duplicates(subset="계정명", keep="last").set_index(["시간", "계정명"])
+    print(df.head(20))
     print(df.dtypes)
+
+    br_col_names = {
+        "rcept_no": "접수번호",
+        "corp_cls": "법인구분",
+        "corp_code": "고유번호",
+        "corp_name": "법인명",
+        "se": "구분",  # 유상증자(주주배정), 전환권행사 등
+        "stock_knd": "주식종류",
+        "thstrm": "당기",
+        "frmtrm": "전기",
+        "lwfr": "전전기",
+    }
+
+    # 사업보고서 (business report)
+    br = dart.report(corp="005930", key_word="배당", bsns_year=2020, reprt_code="11011")
+    br.rename(columns=br_col_names, inplace=True)
+    br.to_csv("data/br_samsung.csv", encoding="utf-8-sig")
+
+    EPS = br.loc[(br["구분"] == "(연결)주당순이익(원)"), "당기"].values[0]
+    TD = br.loc[(br["구분"] == "현금배당금총액(백만원)"), "당기"].values[0]
+    DPS = br.loc[(br["구분"] == "주당 현금배당금(원)") & (br["주식종류"] == "보통주"), "당기"].values[0]
+    Yield = br.loc[(br["구분"] == "현금배당수익률(%)") & (br["주식종류"] == "보통주"), "당기"].values[0]
+    print(EPS, TD, DPS, Yield)
+
+    # dv_dps   = dv[dv['se'] == '주당 현금배당금(원)']
+    # dv_eps   = dv[dv['se'].str.contains('주당순이익')]
+    # dv_yield = dv[dv['se'].str.contains('현금배당수익률')]
+    # dv_TD    = dv[dv['se'].str.contains('현금배당금총액')]
+    #
+    # EPS = int(dv_eps[['thstrm']].iloc[0,0].replace(',','').strip()) # 주당순이익
+    # DPS = int(dv_dps[['thstrm']].iloc[0,0].replace(',', '').strip()) # 주당 배당금
+    # Yield = float(dv_yield[['thstrm']].iloc[0,0].replace(',','').strip())
+    # TD = int(dv_TD[['thstrm']].iloc[0,0].replace(',', '').strip()) * 1000000 # 배당금총액. 백만원단위
 
     # print(len(data))
     # data = data["당기금액"].to_numpy()
