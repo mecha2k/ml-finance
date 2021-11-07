@@ -118,8 +118,9 @@ if __name__ == "__main__":
 
     account = ["매출액", "영업이익", "법인세차감전 순이익", "당기순이익", "자산총계", "부채총계", "자본총계", "기본주당이익(손실)"]
     df = samsung.loc[idx["2020", account], :]
-    df = df["당기금액"].str.replace(",", "").astype(int)
+    df = df["당기금액"].str.replace(",", "").astype("int64")
     df = df.reset_index().drop_duplicates(subset="계정명", keep="last").drop(["시간"], axis=1)
+    print(df)
 
     br_div_col_names = {
         "rcept_no": "접수번호",
@@ -152,45 +153,30 @@ if __name__ == "__main__":
     br.rename(columns=br_div_col_names, inplace=True)
     br.to_csv("data/br_samsung.csv", encoding="utf-8-sig")
 
-    EPS = br.loc[(br["구분"] == "(연결)주당순이익(원)"), "당기"].values[0]
-    TD = br.loc[(br["구분"] == "현금배당금총액(백만원)"), "당기"].values[0]
-    DPS = br.loc[(br["구분"] == "주당 현금배당금(원)") & (br["주식종류"] == "보통주"), "당기"].values[0]
-    Yield = br.loc[(br["구분"] == "현금배당수익률(%)") & (br["주식종류"] == "보통주"), "당기"].values[0]
-    print(EPS, TD, DPS, Yield)
+    EPS = int(br.loc[(br["구분"] == "(연결)주당순이익(원)"), "당기"].str.replace(",", ""))
+    TD = int(br.loc[(br["구분"] == "현금배당금총액(백만원)"), "당기"].str.replace(",", ""))
+    DPS = int(
+        br.loc[(br["구분"] == "주당 현금배당금(원)") & (br["주식종류"] == "보통주"), "당기"].str.replace(",", "")
+    )
+    Yield = float(
+        br.loc[(br["구분"] == "현금배당수익률(%)") & (br["주식종류"] == "보통주"), "당기"].str.replace(",", "")
+    )
+    print("EPS : ", EPS, TD, DPS, Yield)
 
     # 사업보고서 (business report) : 소액주주
     br = dart.report(corp="005930", key_word="소액주주", bsns_year="2020", reprt_code="11011")
     br.rename(columns=br_minor_col_names, inplace=True)
-    print(br)
+    # print(br)
 
-    # df.loc["주당순이익"] = EPS
-    df = df.append(["주당순이익", EPS], ignore_index=True)
-    # aa = pd.DataFrame([EPS], columns="당기금액", index="주당순이익")
-    # print(aa)
-
+    accounts = [
+        {"계정명": "주당순이익", "당기금액": EPS},
+        {"계정명": "현금배당금총액(백만원)", "당기금액": TD},
+        {"계정명": "주당현금배당금(원)", "당기금액": DPS},
+        {"계정명": "현금배당수익률(%)", "당기금액": Yield},
+    ]
+    df = df.append(accounts, ignore_index=True)
     print(df.head(20))
     print(df.dtypes)
-
-    # dv_dps   = dv[dv['se'] == '주당 현금배당금(원)']
-    # dv_eps   = dv[dv['se'].str.contains('주당순이익')]
-    # dv_yield = dv[dv['se'].str.contains('현금배당수익률')]
-    # dv_TD    = dv[dv['se'].str.contains('현금배당금총액')]
-    #
-    # EPS = int(dv_eps[['thstrm']].iloc[0,0].replace(',','').strip()) # 주당순이익
-    # DPS = int(dv_dps[['thstrm']].iloc[0,0].replace(',', '').strip()) # 주당 배당금
-    # Yield = float(dv_yield[['thstrm']].iloc[0,0].replace(',','').strip())
-    # TD = int(dv_TD[['thstrm']].iloc[0,0].replace(',', '').strip()) * 1000000 # 배당금총액. 백만원단위
-
-    # print(len(data))
-    # data = data["당기금액"].to_numpy()
-    # print(data.head(10))
-    # data = pd.to_numeric(data)
-    # print(data)
-
-    # aa = samsung.loc["2020"]
-    # bb = aa.loc["매출액"]
-    # print(aa)
-    # print(bb)
 
     # df = fdr.DataReader(corp_list["삼성전자"], start=start, end=end)
     # print(df.tail())
