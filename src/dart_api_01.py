@@ -6,6 +6,7 @@ import OpenDartReader
 import FinanceDataReader as fdr
 import os
 
+from marcap import marcap_data
 from datetime import datetime
 from dotenv import load_dotenv
 from icecream import ic
@@ -86,7 +87,7 @@ if __name__ == "__main__":
     corp_list = {"삼성전자": "005930", "NAVER": "035420", "카카오": "035720", "현대차": "005380"}
 
     start = datetime(2016, 1, 1)
-    end = datetime(2020, 12, 31)
+    end = datetime(2021, 10, 31)
 
     # corp_fs, corp_fs_all = [], []
     # for name, code in corp_list.items():
@@ -111,7 +112,6 @@ if __name__ == "__main__":
     samsung = samsung.loc[annual]
     # samsung = samsung.loc[annual].reset_index().pivot(index="계정명", columns="시간", values="당기금액")
     samsung.to_csv("data/fs_samsung.csv", encoding="utf-8-sig")
-    print(samsung.head())
 
     idx = pd.IndexSlice
     print(samsung.loc[idx["2020", "매출액"], :].values[0][0])
@@ -120,7 +120,6 @@ if __name__ == "__main__":
     df = samsung.loc[idx["2020", account], :]
     df = df["당기금액"].str.replace(",", "").astype("int64")
     df = df.reset_index().drop_duplicates(subset="계정명", keep="last").drop(["시간"], axis=1)
-    print(df)
 
     br_div_col_names = {
         "rcept_no": "접수번호",
@@ -166,27 +165,35 @@ if __name__ == "__main__":
     # 사업보고서 (business report) : 소액주주
     br = dart.report(corp="005930", key_word="소액주주", bsns_year="2020", reprt_code="11011")
     br.rename(columns=br_minor_col_names, inplace=True)
-    # print(br)
+    stock_tot = int(br["총발행주식수"].str.replace(",", ""))
 
     accounts = [
         {"계정명": "주당순이익", "당기금액": EPS},
         {"계정명": "현금배당금총액(백만원)", "당기금액": TD},
         {"계정명": "주당현금배당금(원)", "당기금액": DPS},
-        {"계정명": "현금배당수익률(%)", "당기금액": Yield},
+        # {"계정명": "현금배당수익률(%)", "당기금액": Yield},
+        {"계정명": "총발생주식수", "당기금액": stock_tot},
     ]
     df = df.append(accounts, ignore_index=True)
     print(df.head(20))
     print(df.dtypes)
 
-    # df = fdr.DataReader(corp_list["삼성전자"], start=start, end=end)
-    # print(df.tail())
+    equity = int(df.loc[df["계정명"] == "자본총계", "당기금액"])
+    liability = int(df.loc[df["계정명"] == "부채총계", "당기금액"])
+    netincome = int(df.loc[df["계정명"] == "당기순이익", "당기금액"])
+    asset = equity + liability
+    stock_tot_1 = int(netincome / EPS)
+    print(f"자산: {int(asset/1E8):,}, 부채: {int(liability/1E8):,}, 자본: {int(equity/1E8):,} (억원)")
 
-    # samsung = (
-    #     samsung.reset_index()
-    #     .drop_duplicates(subset="계정명", keep="first")
-    #     .set_index(["시간", "계정명"])
-    #     .sort_index(level=0)
-    # )
+    df = fdr.DataReader(corp_list["삼성전자"], start=start, end=end)
+    df = df.resample(rule="Y").last()
+    close = int(df["Close"]["2020"])
+
+    PER = close / EPS
+    BPS = int(equity / stock_tot)
+    PBR = close / BPS
+    ROA = PBR / PER
+    print(f"PER: {PER:.2f}, BPS: {BPS:,}, PBR: {PBR:.2f}, ROA: {ROA:.2f}")
 
     # config = {
     #     "title": "삼성전자",
