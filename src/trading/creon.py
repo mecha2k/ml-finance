@@ -56,7 +56,7 @@ def get_stock_price(code):
     time = objStockMst.GetHeaderValue(4)  # 시간
     cprice = objStockMst.GetHeaderValue(11)  # 종가
     diff = objStockMst.GetHeaderValue(12)  # 대비
-    open = objStockMst.GetHeaderValue(13)  # 시가
+    open1 = objStockMst.GetHeaderValue(13)  # 시가
     high = objStockMst.GetHeaderValue(14)  # 고가
     low = objStockMst.GetHeaderValue(15)  # 저가
     offer = objStockMst.GetHeaderValue(16)  # 매도호가
@@ -75,7 +75,7 @@ def get_stock_price(code):
     print("시간", time)
     print("종가", cprice)
     print("대비", diff)
-    print("시가", open)
+    print("시가", open1)
     print("고가", high)
     print("저가", low)
     print("매도호가", offer)
@@ -108,10 +108,10 @@ def get_stock_chart_num(code, num=10):
     objStockChart.SetInputValue(9, ord("1"))  # 수정주가 사용
 
     objStockChart.BlockRequest()
-    len = objStockChart.GetHeaderValue(3)
+    len_header = objStockChart.GetHeaderValue(3)
 
     data = []
-    for i in range(len):
+    for i in range(len_header):
         date = objStockChart.GetDataValue(0, i)
         open1 = objStockChart.GetDataValue(1, i)
         high = objStockChart.GetDataValue(2, i)
@@ -145,8 +145,8 @@ def get_stock_chart(code, num=1000000):
             close = objStockChart.GetDataValue(4, i)  # 종가
             volume = objStockChart.GetDataValue(5, i)  # 거래량
             amount = objStockChart.GetDataValue(6, i)  # 거래대금
-            data.append([date, open1, high, low, close, volume])
-        if objStockChart.Continue == False:  # 더 요청할 데이터가 없으면 break, 있으면 계속 요청
+            data.append([date, open1, high, low, close, volume, amount])
+        if not objStockChart.Continue:  # 더 요청할 데이터가 없으면 break, 있으면 계속 요청
             break
 
     # date, open, high, low, close, volume = zip(*data)
