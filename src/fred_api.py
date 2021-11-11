@@ -7,13 +7,14 @@ import os
 from fredapi import Fred
 from datetime import datetime
 from dotenv import load_dotenv
+from matplotlib.dates import DateFormatter, YearLocator, MonthLocator
 
 
 if __name__ == "__main__":
     load_dotenv(verbose=True)
     fred = Fred(api_key=os.getenv("fred_key"))
 
-    start = datetime(2000, 1, 1)
+    start = datetime(2019, 2, 1)
     end = datetime(2021, 12, 31)
 
     # data = fred.get_series("SP500", observation_start=start, observation_end=end)
@@ -65,10 +66,13 @@ if __name__ == "__main__":
         data = web.DataReader(list(codes.keys()), "fred", start, end)
         data = data.rename(columns=codes)
         data.to_pickle(src_data)
+    data = web.DataReader(list(codes.keys()), "fred", start, end)
+    data = data.rename(columns=codes)
+    data.to_pickle(src_data)
     print(data.tail())
 
     plt.style.use("seaborn-colorblind")
-    plt.rcParams["figure.figsize"] = [6, 4]
+    plt.rcParams["figure.figsize"] = [12, 8]
     plt.rcParams["figure.dpi"] = 300
     plt.set_cmap("cubehelix")
     sns.set_palette("cubehelix")
@@ -78,7 +82,10 @@ if __name__ == "__main__":
         ax.plot(data[value].dropna(axis=0))
         ax.axvline(x=datetime(2019, 12, 12), color="r", linestyle="--", linewidth=1)
         ax.set(title=value, xlabel="time", ylabel=key)
+        ax.xaxis.set_major_locator(MonthLocator())
+        date_form = DateFormatter("%y-%m")
+        ax.xaxis.set_major_formatter(date_form)
         plt.grid(alpha=0.5, linestyle="--")
+        plt.xticks(rotation=45)
         img_name = "eco_indicator/us_" + key + ".png"
         plt.savefig(img_name, bbox_inches="tight")
-
