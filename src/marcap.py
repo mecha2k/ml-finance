@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import platform
 from datetime import datetime
 
 
@@ -28,7 +29,15 @@ def marcap_data(start, end=None, code=None):
         "Rank": "int64",
     }
 
-    marcap_path = "/Users/mecha2k/Documents/Code/python/master/marcap/data/marcap"
+    # Linux: Linux, Mac: Darwin, Windows: Windows
+    os_name = platform.system()
+    if os_name == "Windows":
+        marcap_path = "/Code/python/master/marcap/data/marcap"
+    elif os_name == "Darwin":
+        marcap_path = "/Users/mecha2k/Documents/Code/python/master/marcap/data/marcap"
+    else:
+        marcap_path = "/home/mecha2k/code/python/master/marcap/data/marcap"
+
     for year in range(start.year, end.year + 1):
         try:
             # csv_file = "data/marcap-%s.csv.gz" % (year)
@@ -48,6 +57,8 @@ def marcap_data(start, end=None, code=None):
 
 
 if __name__ == "__main__":
-    df = marcap_data("2021-01-01", "2021-01-31", code="005930")
-    print(df.head())
-    df.info()
+    # df = marcap_data("2021-1-10", "2021-01-31", code="005930")
+    # print(df.tail())
+
+    df = marcap_data("2021-11-10")
+    print(df.tail())

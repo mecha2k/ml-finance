@@ -8,7 +8,6 @@ if __name__ == "__main__":
     start = datetime(2019, 1, 1)
     end = datetime(2020, 12, 31)
 
-    # df = marcap_data("2021-01-21")
     # df = marcap_data("2020-01-01", "2020-12-31")
     df = marcap_data(start=start, end=end, code=ticker)
     df = df.resample(rule="Y").last()
@@ -18,3 +17,6 @@ if __name__ == "__main__":
     marketcap = int(df.loc["2020", "Marcap"])
     stock_tot = int(marketcap / close)  # 5969782550
     print(close, marketcap, stock_tot)
+
+    df = marcap_data("2021-11-10")
+    print(df.head())

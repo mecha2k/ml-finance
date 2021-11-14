@@ -148,7 +148,7 @@ if __name__ == "__main__":
     }
 
     # 사업보고서 (business report) : 배당
-    br = dart.report(corp="005930", key_word="배당", bsns_year=2020, reprt_code="11011")
+    br = dart.report(corp="005930", key_word="배당", bsns_year="2020", reprt_code="11011")
     br.rename(columns=br_div_col_names, inplace=True)
     br.to_csv("data/br_samsung.csv", encoding="utf-8-sig")
 
