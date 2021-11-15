@@ -14,7 +14,7 @@ if __name__ == "__main__":
     load_dotenv(verbose=True)
     fred = Fred(api_key=os.getenv("fred_key"))
 
-    start = datetime(2019, 2, 1)
+    start = datetime(2019, 1, 1)
     end = datetime(2021, 12, 31)
 
     # data = fred.get_series("SP500", observation_start=start, observation_end=end)
@@ -24,10 +24,10 @@ if __name__ == "__main__":
     # data.index = pd.to_datetime(data.index)
     # print(data.tail())
     # # print(fred.search("potential gdp").T)
-    #
+    
     # SP500 = web.DataReader("SP500", "fred", start, end)
     # print(SP500.tail())
-    #
+    
     # data = pd.merge(data, SP500, left_index=True, right_index=True, how="outer")
     # print(data.head())
     # print(data.isna().sum())
@@ -40,7 +40,6 @@ if __name__ == "__main__":
     # print(data.tail())
     # print(data.dtypes)
     # print(data.isna().sum())
-
     # data["Close"].plot()
     # plt.show()
 
