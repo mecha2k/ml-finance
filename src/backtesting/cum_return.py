@@ -24,10 +24,11 @@ if __name__ == "__main__":
     df["cum_ret"] = (df["daily_ret"] + 1).cumprod() - 1
     df["log_ret"] = np.log(df["daily_ret"] + 1)
     df["cum_log_ret"] = df.log_ret.cumsum()
-    daily_ret_sum = df["daily_ret"].sum()
+    daily_ret_mean = df["daily_ret"].mean()
 
-    ic(daily_ret_sum)
+    ic(daily_ret_mean)
     ic(period_ret)
+    ic(df["cum_ret"][-1])
 
     df.to_csv("data/kakao.csv", encoding="utf-8-sig")
     ic(df.tail())
