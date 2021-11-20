@@ -58,13 +58,13 @@ if __name__ == "__main__":
     }
 
     src_data = "eco_indicator/us_data.pkl"
-    try:
-        data = pd.read_pickle(src_data)
-        print("data reading from file...")
-    except FileNotFoundError:
-        data = web.DataReader(list(codes.keys()), "fred", start, end)
-        data = data.rename(columns=codes)
-        data.to_pickle(src_data)
+    # try:
+    #     data = pd.read_pickle(src_data)
+    #     print("data reading from file...")
+    # except FileNotFoundError:
+    #     data = web.DataReader(list(codes.keys()), "fred", start, end)
+    #     data = data.rename(columns=codes)
+    #     data.to_pickle(src_data)
     data = web.DataReader(list(codes.keys()), "fred", start, end)
     data = data.rename(columns=codes)
     data.to_pickle(src_data)
