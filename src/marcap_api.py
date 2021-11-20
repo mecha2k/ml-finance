@@ -19,4 +19,5 @@ if __name__ == "__main__":
     print(close, marketcap, stock_tot)
 
     df = marcap_data("2021-11-10")
+    print(df.info())
     print(df.head())
