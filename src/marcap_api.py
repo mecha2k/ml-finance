@@ -16,8 +16,7 @@ marcap_ind = {
 
 
 def get_marcap_period(start, end):
-    data = list()
-    keys = list()
+    data, keys = list(), list()
     for date in pd.date_range(start=start, end=end, freq="AS"):
         date = datetime(date.year, 4, 1)
         df = marcap_data(start=date)
