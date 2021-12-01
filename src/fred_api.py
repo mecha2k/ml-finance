@@ -24,10 +24,10 @@ if __name__ == "__main__":
     # data.index = pd.to_datetime(data.index)
     # print(data.tail())
     # # print(fred.search("potential gdp").T)
-    
+
     # SP500 = web.DataReader("SP500", "fred", start, end)
     # print(SP500.tail())
-    
+
     # data = pd.merge(data, SP500, left_index=True, right_index=True, how="outer")
     # print(data.head())
     # print(data.isna().sum())
@@ -54,6 +54,7 @@ if __name__ == "__main__":
         "ASPUS": "Average Sales Price of Houses Sold ($)",
         "MSACSR": "Monthly Supply of Houses",
         "VIXCLS": "CBOE Volatility Index: VIX",
+        "T10YIE": "10-Year Breakeven Inflation Rate",
         "SP500": "S&P 500",
     }
 
